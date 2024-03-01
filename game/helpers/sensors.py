@@ -4,7 +4,7 @@ import math
 def draw_sensors(win, player_center_x, player_center_y, standard_angle, angle_sensor, line_length):
     start_pos = (player_center_x, player_center_y)
     
-    angle_to_draw = standard_angle+angle_sensor # 90 # 45 # 135
+    angle_to_draw = standard_angle+angle_sensor
 
     end_pos_sensor = (
         start_pos[0] + math.cos(math.radians(-angle_to_draw)) * line_length, # x

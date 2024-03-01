@@ -1,8 +1,8 @@
 import pygame
-import pygame.gfxdraw
 
 from helpers.cars import Player, Agent
 from helpers.sensors import draw_sensors
+from helpers.world import World
 
 pygame.init()
 pygame.font.init()
