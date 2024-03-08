@@ -33,15 +33,17 @@ class AbstractCar:
             else:
                 self.angle -= self.turnRate
 
-    # increase the velocity
-    def increase_velocity(self):
-        self.vel = min(self.vel + self.acceleration, self.topSpeed)
-        self.move()
 
-    # decrease the velocity 
+    def increase_velocity(self):
+        if self.vel <= self.topSpeed:
+            self.vel += 0.1
+
     def decrease_velocity(self):
-        self.vel = max(self.vel - self.acceleration/2, 0)
-        self.move()
+        if self.vel > 0:
+            self.vel -= 0.2
+        
+        if self.vel < 0: 
+            self.vel = 0
 
     # move the car by the velocity and angle
     def move(self):
@@ -70,6 +72,8 @@ class AbstractCar:
         
         self.rect = new_rect
 
+        pygame.draw.rect(win, "blue", self.rect)
+
         win.blit(rotated_image, new_rect.topleft)
 
     # reset all the variables and return to the starting position
@@ -81,34 +85,38 @@ class AbstractCar:
         self.acceleration = 0.05
         self.angle = 0
 
+    def collisions(self, win, obstacles):
+        for obstacle in obstacles:
+
+            if self.rect.colliderect(obstacle.rect):
+                self.reset()
+
 ##########################################################################
 
-absolute_path_image_car = "C:/Users/matte/programming/pythons/projects/avoiding_obstacles/assets/images/player.png"
+absolute_path_image_car = "C:/Users/matte/programming/pythons/projects/avoiding_obstacles/assets/images/player.png" # TODO: change
 
 class Player(AbstractCar):
     # both used in fun_utils/AbstractCar class
     IMG = pygame.image.load(absolute_path_image_car) 
-    START_POS = (100, 100)
+    START_POS = (100, 200)
 
     def change_rotation(self):
         keys = pygame.key.get_pressed()
 
-        if self.vel != 0:
-            if keys[pygame.K_a]:
-                self.rotate(left=True)
-            if keys[pygame.K_d]:
-                self.rotate(right=True)
+        if keys[pygame.K_a]:
+            self.rotate(left=True)
+        if keys[pygame.K_d]:
+            self.rotate(right=True)
 
     def accelerate(self):
         keys = pygame.key.get_pressed()
-        moved = False
 
         if keys[pygame.K_w]:
-            moved = True
             self.increase_velocity()
-        
-        if not moved:
+        if keys[pygame.K_s]:
             self.decrease_velocity()
+        
+        self.move()
 
 
 class Agent(AbstractCar):
