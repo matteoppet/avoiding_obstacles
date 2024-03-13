@@ -1,0 +1,1 @@
+from gym_game.envs.self_driving.avoid_obstacles_env import AvoidObstaclesEnv

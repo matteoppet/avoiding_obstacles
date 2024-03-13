@@ -1,10 +1,15 @@
 import pygame
 import math
+import random
 
 class AbstractCar:
     def __init__(self, top_speed, turnRate):
         self.img = self.IMG
-        self.x, self.y = self.START_POS
+        
+        if not self.START_POS is None:
+            self.x, self.y = self.START_POS
+        else:
+            self.x, self.y = (0,0)
         
         self.rect = self.img.get_rect()
         self.rect.x, self.rect.y = self.x, self.y
@@ -72,24 +77,23 @@ class AbstractCar:
         
         self.rect = new_rect
 
-        pygame.draw.rect(win, "blue", self.rect)
-
         win.blit(rotated_image, new_rect.topleft)
 
     # reset all the variables and return to the starting position
-    def reset(self):
-        self.x, self.y = self.START_POS
-        self.rect.x, self.rect.y = self.START_POS
+    def reset(self, random_position_start):
+        random_position_start=random_position_start
+        self.x, self.y = random_position_start
+        self.rect.x, self.rect.y = random_position_start
 
         self.vel = 0
         self.acceleration = 0.05
         self.angle = 0
 
-    def collisions(self, win, obstacles):
+    def collisions(self, obstacles):
         for obstacle in obstacles:
 
             if self.rect.colliderect(obstacle.rect):
-                self.reset()
+                return True
 
 ##########################################################################
 
@@ -121,4 +125,43 @@ class Player(AbstractCar):
 
 class Agent(AbstractCar):
     IMG = pygame.image.load(absolute_path_image_car) 
-    START_POS = (200, 200)
+    START_POS = None
+    START_POSITIONS = [
+        (1136, 198), 
+        (576, 93), 
+        (156, 206), 
+        (1177, 452), 
+        (950, 329), 
+        (726, 611), 
+        (137, 452), 
+        (602, 452)
+    ]
+
+    def update_position(self, action):
+        if action == 1: # accelerate
+            if self.vel < self.topSpeed:
+                self.vel += 0.1
+        elif action == 2: # decelerate 
+            if self.vel > 0:
+                self.vel -= 0.2
+
+            if self.vel < 0:
+                self.vel = 0
+        elif action == 3: # steer right
+            self.angle += self.turnRate
+        elif action == 4: # steer left
+            self.angle -= self.turnRate
+
+        radians = math.radians(self.angle)
+        vertical = math.cos(radians) * self.vel
+        horizontal = math.sin(radians) * self.vel
+
+        self.y -= vertical
+        self.x -= horizontal
+
+        self.rect.x = self.x
+        self.rect.y = self.y
+
+    def get_random_position(self):
+        random_position = random.choice(self.START_POSITIONS)
+        return random_position

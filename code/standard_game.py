@@ -4,6 +4,8 @@ from helpers.cars import Player, Agent
 from helpers.sensors import draw_sensors, update_sensors_position_data, collision_sensors
 from helpers.world import World, obstacle_sprites_group
 
+from stable_baselines3 import PPO
+
 pygame.init()
 pygame.font.init()
 
@@ -13,48 +15,37 @@ running = True
 font = pygame.font.SysFont("calibri", 20)
 
 # two cars
-topSpeed = 3
+topSpeed = 4
 turnRate = 3
 
 PLAYER = Player(
     topSpeed,
     turnRate
 )
-# AGENT = Agent(
-#     topSpeed,
-#     turnRate
-# )
-WORLD = World(
-    screen
-)
+WORLD = World()
+WORLD.create_rect()
 obstacle_sprites_group = obstacle_sprites_group
 
-create_info_rect = [
-    (0, 0, 500, 150), 
-    (650, 0, 800, 150), 
-    (0, 250, 900, 150), 
-    (1000, 250, 400, 150), 
-    (0, 500, 650, 250), 
-    (800, 500, 700, 250),
-    (500, 0, 150, 20),
-    (0, 150, 20, 100),
-    (1260, 150, 20, 100),
-    (0, 400, 20, 100),
-    (1260, 400, 20, 100),
-    (650, 700, 200, 20)
-]
+path_model = "trained_agent/models/trained_agent/models/1710347473/PPO_MODEL_1000000.zip"
+MODEL = PPO.load(path_model)
 
-for info in create_info_rect:
-    WORLD.create_rect(info)
+
+def get_observation():
+    pass
+
 
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
+        if event.type == pygame.MOUSEBUTTONUP:
+            pos = pygame.mouse.get_pos()
+            print(pos)
+
     screen.fill("#d3d3d3")
 
-    WORLD.draw_rects()
+    WORLD.draw_rects(screen)
     
     # SENSORS SECTION
     data_sensors = update_sensors_position_data(
@@ -76,10 +67,10 @@ while running:
             rect = pygame.Rect(x, y, 5, 5)
             pygame.draw.rect(screen, "red", rect)
 
-    PLAYER.draw(screen)
-    PLAYER.change_rotation()
-    PLAYER.accelerate()
-    PLAYER.collisions(screen, obstacle_sprites_group)
+    # PLAYER.draw(screen)
+    # PLAYER.change_rotation()
+    # PLAYER.accelerate()
+    # PLAYER.collisions(obstacle_sprites_group)
 
     velocity_text = font.render(f"Velocity: {round(PLAYER.vel,2)}", False, (0,0,0))
     screen.blit(velocity_text,(20, 315))

@@ -10,7 +10,7 @@ SENSORS_NAME_ANGLE = [
     {"name": "right", "angle": 180}]
 LINE_LENGTH_SENSOR = 200
 
-NO_OBJECT_DETECTED = 9999
+NO_OBJECT_DETECTED = 200
 SENSORS_COLLISIONS_INFO = {
     sensor["name"]: {"point_of_collision": None, "distance": NO_OBJECT_DETECTED} for sensor in SENSORS_NAME_ANGLE
 }
