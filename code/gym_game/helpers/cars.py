@@ -139,28 +139,15 @@ class Agent(AbstractCar):
 
     def update_position(self, action):
         if action == 1: # accelerate
-            if self.vel < self.topSpeed:
-                self.vel += 0.1
+            self.increase_velocity()
         elif action == 2: # decelerate 
-            if self.vel > 0:
-                self.vel -= 0.2
-
-            if self.vel < 0:
-                self.vel = 0
+            self.decrease_velocity()
         elif action == 3: # steer right
-            self.angle += self.turnRate
+            self.rotate(right=True)
         elif action == 4: # steer left
-            self.angle -= self.turnRate
+            self.rotate(left=True)
 
-        radians = math.radians(self.angle)
-        vertical = math.cos(radians) * self.vel
-        horizontal = math.sin(radians) * self.vel
-
-        self.y -= vertical
-        self.x -= horizontal
-
-        self.rect.x = self.x
-        self.rect.y = self.y
+        self.move()
 
     def get_random_position(self):
         random_position = random.choice(self.START_POSITIONS)

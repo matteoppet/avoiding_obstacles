@@ -9,7 +9,7 @@ from ...helpers.world import World, obstacle_sprites_group
 
 
 class AvoidObstaclesEnv(gym.Env):
-    metadata = {"render_modes": ["human"], "render_fps": 30}
+    metadata = {"render_modes": ["human"], "render_fps": 40}
 
     window_size = (1280, 720)
 
@@ -42,7 +42,7 @@ class AvoidObstaclesEnv(gym.Env):
         self.window = None
         self.clock = None
 
-        topSpeed = 4
+        topSpeed = 3
         turnRate = 3
         self.AGENT = Agent(
             topSpeed,
@@ -53,13 +53,15 @@ class AvoidObstaclesEnv(gym.Env):
         self.WORLD.create_rect()
         self.OBSTACLE_SPRITES_GROUP = obstacle_sprites_group
 
+        self.stepCounter = 0
+
     def _get_sensors_info(self):
         data_sensors = update_sensors_position_data(
             self._agent_location, self.AGENT.angle)
         info_sensors_dict = collision_sensors(obstacle_sprites_group)
 
         return info_sensors_dict, data_sensors
- 
+    
     def _get_obs(self):
         sensors_dict, _ = self._get_sensors_info()
         return [
@@ -74,41 +76,47 @@ class AvoidObstaclesEnv(gym.Env):
             self.AGENT.angle
         ]
     
-    def reward_function(self, agent_crashed, velocity_player):
+    def get_reward(self, agent_crashed, velocity_player):
         if velocity_player > 0:
-            reward = 1 + velocity_player
+            reward = velocity_player
         else:
-            reward = -2
+            reward = -1
 
         if agent_crashed:
-            reward = -100
+            reward = -5000
 
         return reward
 
-    def step(self, action):
+    def step(self, action):        
+        self.stepCounter += 1
+
         self.AGENT.update_position(action)
         self._agent_location = self.AGENT.rect.center
 
         terminated = False
+        truncated = False
         agent_crashed = self.AGENT.collisions(obstacle_sprites_group)
 
         if agent_crashed:
             terminated = True
+            self.stepCounter = 0
+
+        if self.stepCounter >= 500:
+            truncated = True
+            self.stepCounter = 0
+
+        done = terminated or truncated
 
         # reward
-        reward = self.reward_function(agent_crashed, self.AGENT.vel)
+        reward = self.get_reward(agent_crashed, self.AGENT.vel)
 
         observation = self._get_obs()
         info = {}
 
-        done = False
-        if terminated:
-            done = True
-
         if self.render_mode == "human":
             self.render(mode="human")
 
-        return observation, reward, done, info
+        return observation, reward, terminated, truncated, info
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
@@ -170,6 +178,9 @@ class AvoidObstaclesEnv(gym.Env):
 
             fps_text = self.font.render(f"FPS: {self.clock.get_fps()}", False, (0,0,0))
             self.window.blit(fps_text, (20, 20))
+            
+            stepCounter_text = self.font.render(f"Step count: {self.stepCounter}", False, (0,0,0))
+            self.window.blit(stepCounter_text, (20, 340))
 
             pygame.event.pump()
             pygame.display.update()

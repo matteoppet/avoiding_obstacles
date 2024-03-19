@@ -19,7 +19,7 @@ if not os.path.exists(LOGS_DIR):
 
 from gym_game.envs.self_driving.avoid_obstacles_env import AvoidObstaclesEnv
 
-env = AvoidObstaclesEnv(render_mode=None)
+env = AvoidObstaclesEnv(render_mode="human")
 n_cpu = 6
 env = DummyVecEnv([lambda: env])
 
@@ -31,11 +31,18 @@ model = PPO(
     device="cuda"
 )
 
-TIMESTEPS = 1000000
+TIMESTEPS = 1500000
 model.learn(
     total_timesteps=TIMESTEPS,
     tb_log_name="PPO",
     reset_num_timesteps=False
 )
 
-model.save(f"trained_agent/models/{MODELS_DIR}/PPO_MODEL_{TIMESTEPS}") # FIX THIS PATH
+model.save(f"{MODELS_DIR}/PPO_MODEL_{TIMESTEPS}")
+
+"""
+Finish training
+
+Is important the reward function,
+and if not work check for observation if are right or not
+"""
