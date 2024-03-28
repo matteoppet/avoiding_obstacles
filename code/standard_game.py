@@ -1,10 +1,11 @@
 import pygame
 
-from helpers.cars import Player, Agent
-from helpers.sensors import draw_sensors, update_sensors_position_data, collision_sensors
-from helpers.world import World, obstacle_sprites_group
+from gym_game.helpers.cars import Player
+from gym_game.helpers.sensors import create_sensors_data, update_position_sensors, draw_sensors, collisions, SENSORS_COLLISIONS_DATA
+from gym_game.helpers.world import World, obstacle_sprites_group
 
-from stable_baselines3 import PPO
+import math
+
 
 pygame.init()
 pygame.font.init()
@@ -26,12 +27,28 @@ WORLD = World()
 WORLD.create_rect()
 obstacle_sprites_group = obstacle_sprites_group
 
-path_model = "trained_agent/models/trained_agent/models/1710347473/PPO_MODEL_1000000.zip"
-MODEL = PPO.load(path_model)
+
+SENSORS_DATA = create_sensors_data(PLAYER.rect.center)
 
 
-def get_observation():
-    pass
+color_circle = (255,102,102)
+center_circle = (100, 100)
+radius_circle = 15
+
+start_line = (center_circle[0]-1, center_circle[1])
+end_line = (center_circle[0]-1, center_circle[1]-radius_circle+1)
+line_length = 15
+rotation_angle_degrees = 0
+rotation_speed = 2
+
+# Function to rotate a point around another point
+def rotate_point(point, angle_deg, origin):
+    angle_rad = math.radians(angle_deg)
+    ox, oy = origin
+    px, py = point
+    qx = ox + math.cos(angle_rad) * (px - ox) - math.sin(angle_rad) * (py - oy)
+    qy = oy + math.sin(angle_rad) * (px - ox) + math.cos(angle_rad) * (py - oy)
+    return round(qx), round(qy)
 
 
 while running:
@@ -48,29 +65,35 @@ while running:
     WORLD.draw_rects(screen)
     
     # SENSORS SECTION
-    data_sensors = update_sensors_position_data(
-        player_center_position=PLAYER.rect.center,
-        standard_angle=PLAYER.angle,
-    )
+    update_position_sensors(SENSORS_DATA, PLAYER.rect.center, PLAYER.angle)
+    draw_sensors(SENSORS_DATA, screen)
+    collisions(SENSORS_DATA, obstacle_sprites_group)
 
-    for name, info in data_sensors.items():
-        draw_sensors(win=screen, start_position=info["start"], end_position=info["end"])
 
-    collisions_sensors_dict = collision_sensors(obstacle_sprites_group)
+    # position_text_distance_sensor = (300, 280)
+    for sensor_name in SENSORS_COLLISIONS_DATA:
 
-    for name_sensor in collisions_sensors_dict:
-
-        if collisions_sensors_dict[name_sensor]["point_of_collision"] != None:
-            x = collisions_sensors_dict[name_sensor]["point_of_collision"][0]
-            y = collisions_sensors_dict[name_sensor]["point_of_collision"][1]
+        if SENSORS_COLLISIONS_DATA[sensor_name]["point_of_collision"] != None:
+            x = SENSORS_COLLISIONS_DATA[sensor_name]["point_of_collision"][0]
+            y = SENSORS_COLLISIONS_DATA[sensor_name]["point_of_collision"][1]
 
             rect = pygame.Rect(x, y, 5, 5)
             pygame.draw.rect(screen, "red", rect)
 
-    # PLAYER.draw(screen)
-    # PLAYER.change_rotation()
-    # PLAYER.accelerate()
-    # PLAYER.collisions(obstacle_sprites_group)
+            
+    #         distance = collisions_sensors_dict[name_sensor]["distance"]
+    #         distance_text = font.render(f"{name_sensor}: {round(distance, 2)}", False, (0,0,0))
+    #         screen.blit(distance_text, position_text_distance_sensor)
+
+    #         position_text_distance_sensor = (position_text_distance_sensor[0], position_text_distance_sensor[1] + 20)
+
+    PLAYER.draw(screen)
+    PLAYER.change_rotation()
+    PLAYER.accelerate()
+    collided = PLAYER.collisions(obstacle_sprites_group)
+
+    if collided:
+        PLAYER.reset()
 
     velocity_text = font.render(f"Velocity: {round(PLAYER.vel,2)}", False, (0,0,0))
     screen.blit(velocity_text,(20, 315))
@@ -82,6 +105,27 @@ while running:
     # if PLAYER.mask.overlap(AGENT.mask, (offset_x, offset_y)):
     #     PLAYER.reset()
     #     AGENT.reset()
+
+
+
+
+    # keys = pygame.key.get_pressed()
+    # # Update rotation angle
+    # if keys[pygame.K_g]:
+    #     rotation_angle_degrees -= rotation_speed
+
+    # if keys[pygame.K_j]:
+    #     rotation_angle_degrees += rotation_speed
+
+    # # Calculate end point after rotation
+    # end_line = (start_line[0] + line_length, start_line[1])
+    # rotated_end_point = rotate_point(end_line, rotation_angle_degrees, start_line)
+
+
+    # pygame.draw.rect(screen, "black", pygame.Rect(85, 85, 30, 30))
+    # pygame.draw.circle(screen, color_circle, center_circle, radius_circle)
+    # pygame.draw.line(screen, "black", start_line, rotated_end_point, width=2)
+
 
     pygame.display.flip()
     pygame.display.update()

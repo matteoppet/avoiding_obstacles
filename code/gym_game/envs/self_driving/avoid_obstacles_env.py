@@ -56,11 +56,11 @@ class AvoidObstaclesEnv(gym.Env):
         self.stepCounter = 0
 
     def _get_sensors_info(self):
-        data_sensors = update_sensors_position_data(
+        position_sensors = update_sensors_position_data(
             self._agent_location, self.AGENT.angle)
-        info_sensors_dict = collision_sensors(obstacle_sprites_group)
+        collision_data = collision_sensors(obstacle_sprites_group)
 
-        return info_sensors_dict, data_sensors
+        return collision_data, position_sensors
     
     def _get_obs(self):
         sensors_dict, _ = self._get_sensors_info()
@@ -80,7 +80,7 @@ class AvoidObstaclesEnv(gym.Env):
         if velocity_player > 0:
             reward = velocity_player
         else:
-            reward = -1
+            reward = -5
 
         if agent_crashed:
             reward = -5000
@@ -108,7 +108,7 @@ class AvoidObstaclesEnv(gym.Env):
         done = terminated or truncated
 
         # reward
-        reward = self.get_reward(agent_crashed, self.AGENT.vel)
+        self.reward = self.get_reward(agent_crashed, self.AGENT.vel)
 
         observation = self._get_obs()
         info = {}
@@ -116,7 +116,7 @@ class AvoidObstaclesEnv(gym.Env):
         if self.render_mode == "human":
             self.render(mode="human")
 
-        return observation, reward, terminated, truncated, info
+        return observation, self.reward, terminated, truncated, info
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
@@ -124,6 +124,8 @@ class AvoidObstaclesEnv(gym.Env):
         random_position_start = self.AGENT.get_random_position()
         self._agent_location = random_position_start
         self.AGENT.reset(random_position_start)
+
+        self.reward = 0
 
         observation = self._get_obs()
         info = {}
@@ -174,13 +176,27 @@ class AvoidObstaclesEnv(gym.Env):
             self.AGENT.draw(self.window)
 
             velocity_text = self.font.render(f"Velocity: {round(self.AGENT.vel, 2)}", False, (0,0,0))
-            self.window.blit(velocity_text, (20, 315))
+            self.window.blit(velocity_text, (20, 290))
 
             fps_text = self.font.render(f"FPS: {self.clock.get_fps()}", False, (0,0,0))
             self.window.blit(fps_text, (20, 20))
             
             stepCounter_text = self.font.render(f"Step count: {self.stepCounter}", False, (0,0,0))
-            self.window.blit(stepCounter_text, (20, 340))
+            self.window.blit(stepCounter_text, (20, 315))
+
+            reward_text = self.font.render(f"Current reward: {round(self.reward, 2)}", False, (0,0,0))
+            self.window.blit(reward_text, (20, 340))
+
+            collision_data, _ = self._get_sensors_info()
+
+            position_text_distance_sensor = (300, 280)
+            for sensor_name in collision_data:
+                distance = collision_data[sensor_name]["distance"]
+                
+                distance_text = self.font.render(f"{sensor_name}: {round(distance, 2)}", False, (0,0,0))
+                self.window.blit(distance_text, position_text_distance_sensor)
+
+                position_text_distance_sensor = (position_text_distance_sensor[0], position_text_distance_sensor[1] + 20)
 
             pygame.event.pump()
             pygame.display.update()
@@ -191,3 +207,6 @@ class AvoidObstaclesEnv(gym.Env):
         if self.window is not None:
             pygame.display.quit()
             pygame.quit()
+
+
+# do sensors on the new player design

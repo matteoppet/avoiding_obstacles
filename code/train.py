@@ -23,22 +23,26 @@ env = AvoidObstaclesEnv(render_mode="human")
 n_cpu = 6
 env = DummyVecEnv([lambda: env])
 
-model = PPO(
+model = DQN(
     "MlpPolicy",
     env,
     verbose=1,
     tensorboard_log=LOGS_DIR,
-    device="cuda"
+    device="cuda",
+    exploration_fraction=0.05
 )
 
-TIMESTEPS = 1500000
-model.learn(
-    total_timesteps=TIMESTEPS,
-    tb_log_name="PPO",
-    reset_num_timesteps=False
-)
+TIMESTEPS = 8000000
+try:
+    model.learn(
+        total_timesteps=TIMESTEPS,
+        tb_log_name="PPO",
+        reset_num_timesteps=False
+    )
+except KeyboardInterrupt:
+    print("Model stopped and save and the current TIMESTEP where it was.")
 
-model.save(f"{MODELS_DIR}/PPO_MODEL_{TIMESTEPS}")
+model.save(f"{MODELS_DIR}/PPO_MODEL_{TIMESTEPS}") # stopped at 6377472
 
 """
 Finish training

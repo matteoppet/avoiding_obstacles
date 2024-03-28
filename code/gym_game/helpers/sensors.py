@@ -2,81 +2,88 @@ import pygame
 import math
 import numpy as np
 
-SENSORS_NAME_ANGLE = [
-    {"name": "diagonal_left", "angle": 45}, 
-    {"name": "center", "angle": 90}, 
-    {"name": "diagonal_right", "angle": 135},
-    {"name": "left", "angle": 0},
-    {"name": "right", "angle": 180}]
-LINE_LENGTH_SENSOR = 200
 
-NO_OBJECT_DETECTED = 200
-SENSORS_COLLISIONS_INFO = {
-    sensor["name"]: {"point_of_collision": None, "distance": NO_OBJECT_DETECTED} for sensor in SENSORS_NAME_ANGLE
-}
-
-SENSORS_POSITION_DATA = {}
-
-COLOR_SENSOR = (27, 91, 252)
+LINE_LENGTH = 200
+COLOR_SENSOR = (190, 190, 190)
+SENSORS_COLLISIONS_DATA = {}
+NO_COLLISION_DETECTED = 9999
 
 
-def draw_sensors(win, start_position, end_position):
-    start_position = start_position
-    end_position = end_position
+# update values of the dictionary DONE
+    # do a proprtion where if there is contact, remove 16 from the distance as the radius TODO 
 
-    pygame.draw.line(win, COLOR_SENSOR, start_position, end_position, 3)
+# draw the sensors DONE
+    # red circle at the contact DONE
+
+# collisions with obstacles DONE
 
 
-def update_sensors_position_data(player_center_position, standard_angle):
-    for infos in SENSORS_NAME_ANGLE:
-        name = infos["name"]
-        angle = infos["angle"]
+def update_position_sensors(SENSORS_DATA, player_center, angle_player):
+    SENSORS_DATA = SENSORS_DATA
+    for sensor in SENSORS_DATA:
+        angle = sensor["angle"]
 
-        start_pos_x = player_center_position[0]
-        start_pos_y = player_center_position[1]
-        
-        angle_to_draw = standard_angle+angle
+        start_pos = player_center
 
-        end_pos_sensor = (
-            start_pos_x + math.cos(math.radians(-angle_to_draw)) * LINE_LENGTH_SENSOR, # x
-            start_pos_y + math.sin(math.radians(-angle_to_draw)) * LINE_LENGTH_SENSOR # y
+        angle_to_calculate = angle_player+angle
+
+        end_pos = (
+            start_pos[0] + math.cos(math.radians(-angle_to_calculate)) * LINE_LENGTH,
+            start_pos[1] + math.sin(math.radians(-angle_to_calculate)) * LINE_LENGTH
         )
 
-        SENSORS_POSITION_DATA[name] = {"start": (start_pos_x, start_pos_y), "end": end_pos_sensor}
+        sensor["start_pos"] = start_pos
+        sensor["end_pos"] = end_pos
 
-    return SENSORS_POSITION_DATA
+
+def create_sensors_data(player_center):
+    return [
+        {"name": 1, "angle": 0, "start_pos": player_center, "end_pos": None},
+        {"name": 2, "angle": 45, "start_pos": player_center, "end_pos": None},
+        {"name": 3, "angle": 90, "start_pos": player_center, "end_pos": None},
+        {"name": 4, "angle": 135, "start_pos": player_center, "end_pos": None},
+        {"name": 5, "angle": 180, "start_pos": player_center, "end_pos": None},
+        {"name": 6, "angle": 225, "start_pos": player_center, "end_pos": None},
+        {"name": 7, "angle": 270, "start_pos": player_center, "end_pos": None},
+        {"name": 8, "angle": 315, "start_pos": player_center, "end_pos": None},
+    ]
 
 
-def collision_sensors(obstacles):
-    for name in SENSORS_POSITION_DATA:
-        start = SENSORS_POSITION_DATA[name]["start"]
-        end = SENSORS_POSITION_DATA[name]["end"]
+def draw_sensors(SENSORS_DATA, screen):
+    for sensor in SENSORS_DATA:
+        start = sensor["start_pos"]
+        end = sensor["end_pos"]
+
+        pygame.draw.line(screen, COLOR_SENSOR, start, end, 2)
+
+
+def collisions(SENSORS_DATA, obstacles):
+    for sensor in SENSORS_DATA:
+        start = sensor["start_pos"]
+        end = sensor["end_pos"]
 
         collisions = {}
         for obstacle in obstacles:
             points_collision = obstacle.rect.clipline(start, end)
 
             if points_collision:
-                x_point, y_point = points_collision[0]
+                x, y = points_collision[0] # the contact of the sensor less far from the player
 
                 distance = np.linalg.norm(
-                    np.array([*start]) - np.array([x_point, y_point])
+                    np.array([*start]) - np.array([x, y])
                 )
-
-                collisions[distance] = (x_point, y_point)
+                collisions[distance] = (x, y)
 
         if collisions != {}:
-            min_distance_collision = min(collisions)
-            point_of_collision = collisions[min_distance_collision]
+            collision_lessfar = min(collisions)
+            point_of_collision = collisions[collision_lessfar]
 
-            SENSORS_COLLISIONS_INFO[name] = {
+            SENSORS_COLLISIONS_DATA[sensor["name"]] = {
                 "point_of_collision": point_of_collision,
-                "distance": min_distance_collision
+                "distance": collision_lessfar
             }
         else:
-            SENSORS_COLLISIONS_INFO[name] = {
+            SENSORS_COLLISIONS_DATA[sensor["name"]] = {
                 "point_of_collision": None,
-                "distance": NO_OBJECT_DETECTED
+                "distance": NO_COLLISION_DETECTED
             }
-
-    return SENSORS_COLLISIONS_INFO

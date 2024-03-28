@@ -14,12 +14,12 @@ if __name__ == "__main__":
 
     env.render_mode = "human"
 
-    path_model = "trained_agent/models/1710689970/PPO_MODEL_3000000.zip"
+    path_model = "trained_agent/models/1711095581/PPO_MODEL_8000000.zip"
     MODEL = PPO.load(path_model)
 
     obs, _info = env.reset()
     for i in range(10000):
-        action, _states = MODEL.predict(obs, deterministic=True)
+        action, _states = MODEL.predict(obs)
         obs, reward, done, info = env.step(action)
 
         if done:
