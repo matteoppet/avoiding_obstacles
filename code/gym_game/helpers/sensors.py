@@ -9,15 +9,6 @@ SENSORS_COLLISIONS_DATA = {}
 NO_COLLISION_DETECTED = 9999
 
 
-# update values of the dictionary DONE
-    # do a proprtion where if there is contact, remove 16 from the distance as the radius TODO 
-
-# draw the sensors DONE
-    # red circle at the contact DONE
-
-# collisions with obstacles DONE
-
-
 def update_position_sensors(SENSORS_DATA, player_center, angle_player):
     SENSORS_DATA = SENSORS_DATA
     for sensor in SENSORS_DATA:
@@ -57,7 +48,7 @@ def draw_sensors(SENSORS_DATA, screen):
         pygame.draw.line(screen, COLOR_SENSOR, start, end, 2)
 
 
-def collisions(SENSORS_DATA, obstacles):
+def collision_sensors(SENSORS_DATA, obstacles):
     for sensor in SENSORS_DATA:
         start = sensor["start_pos"]
         end = sensor["end_pos"]
@@ -72,6 +63,13 @@ def collisions(SENSORS_DATA, obstacles):
                 distance = np.linalg.norm(
                     np.array([*start]) - np.array([x, y])
                 )
+
+                distance = calculate_proportion(
+                    distance,
+                    16,
+                    200
+                )
+
                 collisions[distance] = (x, y)
 
         if collisions != {}:
@@ -87,3 +85,8 @@ def collisions(SENSORS_DATA, obstacles):
                 "point_of_collision": None,
                 "distance": NO_COLLISION_DETECTED
             }
+
+
+def calculate_proportion(collision_distance, player_radius, max_distance):
+    proportion = (collision_distance - player_radius) / max_distance
+    return int(round(proportion * 100))

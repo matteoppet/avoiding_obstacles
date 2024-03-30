@@ -1,7 +1,7 @@
 import pygame
 
 from gym_game.helpers.cars import Player
-from gym_game.helpers.sensors import create_sensors_data, update_position_sensors, draw_sensors, collisions, SENSORS_COLLISIONS_DATA
+from gym_game.helpers.sensors import create_sensors_data, update_position_sensors, draw_sensors, collision_sensors, SENSORS_COLLISIONS_DATA
 from gym_game.helpers.world import World, obstacle_sprites_group
 
 import math
@@ -67,10 +67,10 @@ while running:
     # SENSORS SECTION
     update_position_sensors(SENSORS_DATA, PLAYER.rect.center, PLAYER.angle)
     draw_sensors(SENSORS_DATA, screen)
-    collisions(SENSORS_DATA, obstacle_sprites_group)
+    collision_sensors(SENSORS_DATA, obstacle_sprites_group)
 
 
-    # position_text_distance_sensor = (300, 280)
+    position_text_distance_sensor = (300, 250)
     for sensor_name in SENSORS_COLLISIONS_DATA:
 
         if SENSORS_COLLISIONS_DATA[sensor_name]["point_of_collision"] != None:
@@ -78,14 +78,16 @@ while running:
             y = SENSORS_COLLISIONS_DATA[sensor_name]["point_of_collision"][1]
 
             rect = pygame.Rect(x, y, 5, 5)
-            pygame.draw.rect(screen, "red", rect)
+            pygame.draw.circle(screen, "red", (x, y), radius=3)
 
             
-    #         distance = collisions_sensors_dict[name_sensor]["distance"]
-    #         distance_text = font.render(f"{name_sensor}: {round(distance, 2)}", False, (0,0,0))
-    #         screen.blit(distance_text, position_text_distance_sensor)
 
-    #         position_text_distance_sensor = (position_text_distance_sensor[0], position_text_distance_sensor[1] + 20)
+        distance = SENSORS_COLLISIONS_DATA[sensor_name]["distance"]
+        distance_text = font.render(f"{sensor_name}: {distance}", False, (0,0,0))
+        screen.blit(distance_text, position_text_distance_sensor)
+
+        position_text_distance_sensor = (position_text_distance_sensor[0], position_text_distance_sensor[1] + 20)
+
 
     PLAYER.draw(screen)
     PLAYER.change_rotation()
@@ -101,31 +103,6 @@ while running:
     fps_text = font.render(f"FPS: {clock.get_fps()}", False, (0,0,0))
     screen.blit(fps_text, (20, 20))
 
-    # offset_x, offset_y = (PLAYER.rect.x - AGENT.rect.x), (PLAYER.rect.y - AGENT.rect.y)
-    # if PLAYER.mask.overlap(AGENT.mask, (offset_x, offset_y)):
-    #     PLAYER.reset()
-    #     AGENT.reset()
-
-
-
-
-    # keys = pygame.key.get_pressed()
-    # # Update rotation angle
-    # if keys[pygame.K_g]:
-    #     rotation_angle_degrees -= rotation_speed
-
-    # if keys[pygame.K_j]:
-    #     rotation_angle_degrees += rotation_speed
-
-    # # Calculate end point after rotation
-    # end_line = (start_line[0] + line_length, start_line[1])
-    # rotated_end_point = rotate_point(end_line, rotation_angle_degrees, start_line)
-
-
-    # pygame.draw.rect(screen, "black", pygame.Rect(85, 85, 30, 30))
-    # pygame.draw.circle(screen, color_circle, center_circle, radius_circle)
-    # pygame.draw.line(screen, "black", start_line, rotated_end_point, width=2)
-
 
     pygame.display.flip()
     pygame.display.update()
@@ -133,3 +110,9 @@ while running:
     clock.tick(30)
 
 pygame.quit()
+
+
+# TODO: Sensors collision distance proportion DONE
+# TODO: clean the code 
+# TODO: Convert the code in the environment
+

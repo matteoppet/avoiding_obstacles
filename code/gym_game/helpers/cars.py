@@ -6,7 +6,7 @@ class AbstractCar:
     def __init__(self, top_speed, turn_rate):
         # sprite setup for the car
         self.img = self.IMG
-        self.x, self.y = self.START_POS
+        self.x, self.y = (0,0) # * TEMPORARY POSITION, WILL CHANGE AT THE RESET OF THE CAR.
         self.rect = self.img.get_rect()
         self.rect.x, self.rect.y = self.x, self.y
         self.mask = pygame.mask.from_surface(self.img)
@@ -76,16 +76,23 @@ class AbstractCar:
         pygame.draw.line(screen, color_line, start_line, rotated_end_point, width=2)
 
 
-    def reset(self, random_position_start):
-        ...
+    def reset(self, random_pos_start):
+        self.vel = 0
+        self.angle = 0
+        self.angle_line = -90
+
+        self.x, self.y = random_pos_start
+        self.rect.x, self.rect.y = random_pos_start
 
     def collisions(self, obstacles):
-        ...
+        for obstacle in obstacles:
+            if self.rect.colliderect(obstacle.rect):
+                return True
 
 
 class Player(AbstractCar):
     IMG = pygame.Surface((30, 30))
-    START_POS = (100, 100)
+    START_POS = (200, 180)
 
     def change_rotation(self):
         keys = pygame.key.get_pressed()
@@ -104,3 +111,32 @@ class Player(AbstractCar):
             self.decrease_velocity()
         
         self.move()
+
+
+class Agent(AbstractCar):
+    IMG = pygame.Surface((30, 30))
+    START_POS = [
+        (1136, 198), 
+        (576, 93), 
+        (156, 206), 
+        (1177, 452), 
+        (950, 329), 
+        (726, 611), 
+        (137, 452), 
+        (602, 452)
+    ]
+
+    def update_position(self, action):
+        if action == 1: # accelerate
+            self.increase_velocity()
+            self.move()
+        elif action == 2: # decelerate 
+            self.decrease_velocity()
+            self.move()
+        elif action == 3: # steer right
+            self.rotate(right=True)
+        elif action == 4: # steer left
+            self.rotate(left=True)
+
+    def get_random_start_pos(self):
+        return random.choice(self.START_POS)

@@ -4,7 +4,7 @@ from gymnasium import spaces
 
 import pygame
 from ...helpers.cars import Agent
-from ...helpers.sensors import update_sensors_position_data, collision_sensors, draw_sensors
+from ...helpers.sensors import update_position_sensors, collision_sensors, create_sensors_data, draw_sensors, SENSORS_COLLISIONS_DATA
 from ...helpers.world import World, obstacle_sprites_group
 
 
@@ -29,13 +29,12 @@ class AvoidObstaclesEnv(gym.Env):
             - Speed
             - Angle
         """
-        low = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0])
+        low = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
         high = np.array([
             self.window_size[0],  self.window_size[1],
-            200, 200, 200, 200, 200,
-            4, 360])
+            4, 360, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999])
         self.observation_space = spaces.Box(low=low, high=high,
-                                            shape=(9,), dtype=np.float32)
+                                            shape=(12,), dtype=np.float32)
 
         self.render_mode = render_mode
 
@@ -55,26 +54,20 @@ class AvoidObstaclesEnv(gym.Env):
 
         self.stepCounter = 0
 
-    def _get_sensors_info(self):
-        position_sensors = update_sensors_position_data(
-            self._agent_location, self.AGENT.angle)
-        collision_data = collision_sensors(obstacle_sprites_group)
-
-        return collision_data, position_sensors
+        self.SENSORS_DATA = create_sensors_data(self.AGENT.rect.center)
     
     def _get_obs(self):
-        sensors_dict, _ = self._get_sensors_info()
-        return [
+        obs = [
             self._agent_location[0],
             self._agent_location[1],
-            sensors_dict["left"]["distance"],
-            sensors_dict["diagonal_left"]["distance"],
-            sensors_dict["center"]["distance"],
-            sensors_dict["diagonal_right"]["distance"],
-            sensors_dict["right"]["distance"],
             self.AGENT.vel,
             self.AGENT.angle
         ]
+
+        for index in range(len(SENSORS_COLLISIONS_DATA)):
+            obs.append(SENSORS_COLLISIONS_DATA[index+1]["distance"])
+
+        return obs
     
     def get_reward(self, agent_crashed, velocity_player):
         if velocity_player > 0:
@@ -90,8 +83,13 @@ class AvoidObstaclesEnv(gym.Env):
     def step(self, action):        
         self.stepCounter += 1
 
+        # update position player
         self.AGENT.update_position(action)
         self._agent_location = self.AGENT.rect.center
+
+        # update values sensors
+        update_position_sensors(self.SENSORS_DATA, self._agent_location, self.AGENT.angle)
+        collision_sensors(self.SENSORS_DATA, self.OBSTACLE_SPRITES_GROUP)
 
         terminated = False
         truncated = False
@@ -121,11 +119,14 @@ class AvoidObstaclesEnv(gym.Env):
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
         
-        random_position_start = self.AGENT.get_random_position()
+        random_position_start = self.AGENT.get_random_start_pos()
         self._agent_location = random_position_start
         self.AGENT.reset(random_position_start)
 
         self.reward = 0
+
+        update_position_sensors(self.SENSORS_DATA, self._agent_location, self.AGENT.angle)
+        collision_sensors(self.SENSORS_DATA, self.OBSTACLE_SPRITES_GROUP)
 
         observation = self._get_obs()
         info = {}
@@ -157,21 +158,15 @@ class AvoidObstaclesEnv(gym.Env):
 
             self.WORLD.draw_rects(self.window)
 
-            collisions_sensors_dict, data_sensors = self._get_sensors_info()
-            for name, info in data_sensors.items():
-                draw_sensors(
-                    win=self.window,
-                    start_position=info["start"],
-                    end_position=info["end"]
-                )
+            update_position_sensors(self.SENSORS_DATA, self.AGENT.rect.center, self.AGENT.angle)
+            draw_sensors(self.SENSORS_DATA, self.window)
 
-            for name_sensor in collisions_sensors_dict:
-                if collisions_sensors_dict[name_sensor]["point_of_collision"] != None:
-                    x = collisions_sensors_dict[name_sensor]["point_of_collision"][0]
-                    y = collisions_sensors_dict[name_sensor]["point_of_collision"][1]
+            for sensor_name in SENSORS_COLLISIONS_DATA:
+                if SENSORS_COLLISIONS_DATA[sensor_name]["point_of_collision"] != None:
+                    x = SENSORS_COLLISIONS_DATA[sensor_name]["point_of_collision"][0]
+                    y = SENSORS_COLLISIONS_DATA[sensor_name]["point_of_collision"][1]
 
-                    rect = pygame.Rect(x, y, 5, 5)
-                    pygame.draw.rect(self.window, "red", rect)
+                    pygame.draw.circle(self.window, "red", (x, y), radius=3)
 
             self.AGENT.draw(self.window)
 
@@ -187,17 +182,6 @@ class AvoidObstaclesEnv(gym.Env):
             reward_text = self.font.render(f"Current reward: {round(self.reward, 2)}", False, (0,0,0))
             self.window.blit(reward_text, (20, 340))
 
-            collision_data, _ = self._get_sensors_info()
-
-            position_text_distance_sensor = (300, 280)
-            for sensor_name in collision_data:
-                distance = collision_data[sensor_name]["distance"]
-                
-                distance_text = self.font.render(f"{sensor_name}: {round(distance, 2)}", False, (0,0,0))
-                self.window.blit(distance_text, position_text_distance_sensor)
-
-                position_text_distance_sensor = (position_text_distance_sensor[0], position_text_distance_sensor[1] + 20)
-
             pygame.event.pump()
             pygame.display.update()
 
@@ -208,5 +192,3 @@ class AvoidObstaclesEnv(gym.Env):
             pygame.display.quit()
             pygame.quit()
 
-
-# do sensors on the new player design
