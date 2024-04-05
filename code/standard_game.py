@@ -15,7 +15,6 @@ clock = pygame.time.Clock()
 running = True
 font = pygame.font.SysFont("calibri", 20)
 
-# two cars
 topSpeed = 4
 turnRate = 3
 
@@ -23,6 +22,9 @@ PLAYER = Player(
     topSpeed,
     turnRate
 )
+PLAYER.reset(PLAYER.START_POS)
+
+
 WORLD = World()
 WORLD.create_rect()
 obstacle_sprites_group = obstacle_sprites_group
@@ -78,7 +80,7 @@ while running:
             y = SENSORS_COLLISIONS_DATA[sensor_name]["point_of_collision"][1]
 
             rect = pygame.Rect(x, y, 5, 5)
-            pygame.draw.circle(screen, "red", (x, y), radius=3)
+            pygame.draw.circle(screen, (215, 35, 35), (x, y), radius=3)
 
             
 

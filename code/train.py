@@ -18,21 +18,21 @@ if not os.path.exists(LOGS_DIR):
 
 
 from gym_game.envs.self_driving.avoid_obstacles_env import AvoidObstaclesEnv
+from gym_game.envs.self_driving.cruising_without_obstacles_env import WithoutObstacles
 
-env = AvoidObstaclesEnv(render_mode="human")
+env = WithoutObstacles(render_mode=None)
 n_cpu = 6
 env = DummyVecEnv([lambda: env])
 
-model = DQN(
+model = PPO(
     "MlpPolicy",
     env,
     verbose=1,
     tensorboard_log=LOGS_DIR,
-    device="cuda",
-    exploration_fraction=0.05
+    device="cpu",
 )
 
-TIMESTEPS = 8000000
+TIMESTEPS = 10000000
 try:
     model.learn(
         total_timesteps=TIMESTEPS,

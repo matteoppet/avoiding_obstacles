@@ -1,6 +1,6 @@
 import pygame
 
-COLOR = (91, 155, 69)
+COLOR = (110, 128, 113)
 obstacle_sprites_group = pygame.sprite.Group()
 class Obstacle(pygame.sprite.Sprite):
     def __init__(self, info_rect, group):
@@ -13,8 +13,25 @@ class Obstacle(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.image)
 
 class World:
-    def create_rect(self):
-        info_rects = [
+    def create_rect(self, window_size):
+        info_rects = self.bounds_window(window_size)
+
+        for info_rect in info_rects:
+            Obstacle(info_rect, obstacle_sprites_group)
+
+    def bounds_window(self, window_size):
+        x_window = window_size[0]
+        y_window = window_size[1]
+
+        return [
+            (-50, 0, 50, y_window),
+            (0, -50, x_window, 50),
+            (x_window, 0, x_window+50, y_window),
+            (0, y_window, x_window, y_window+50)
+        ]
+    
+    def rect_in_map(self):
+        return [
             (0, 0, 500, 150), 
             (650, 0, 800, 150), 
             (0, 250, 900, 150), 
@@ -28,9 +45,6 @@ class World:
             (1260, 400, 20, 100),
             (650, 700, 200, 20)
         ]
-
-        for info_rect in info_rects:
-            Obstacle(info_rect, obstacle_sprites_group)
 
     def draw_rects(self, win):
         for sprite in obstacle_sprites_group:

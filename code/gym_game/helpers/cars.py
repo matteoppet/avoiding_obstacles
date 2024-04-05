@@ -21,6 +21,13 @@ class AbstractCar:
         self.turnRate = turn_rate
         self.acceleration = 0.05
 
+        # STUFF FOR DRAW
+        self.color_circle = (48, 56, 65)
+        self.radius_circle = 15
+
+        self.color_line = (238, 238, 238)
+        self.line_length = 15
+
     def rotate(self, left=False, right=False):
         if left:
             self.angle += self.turnRate
@@ -62,18 +69,12 @@ class AbstractCar:
         return round(qx), round(qy)
 
     def draw(self, screen):
-        #pygame.draw.rect(screen, "black" , self.rect)
+        pygame.draw.circle(screen, self.color_circle, (self.rect.centerx, self.rect.centery), self.radius_circle)
 
-        color_circle = (255,102,102)
-        radius_circle = 15
-        pygame.draw.circle(screen, color_circle, (self.rect.centerx, self.rect.centery), radius_circle)
-
-        color_line = "black"
-        line_length = 15
         start_line = (self.rect.centerx-1, self.rect.centery)
-        end_line = (start_line[0]+line_length, start_line[1])
+        end_line = (start_line[0]+self.line_length, start_line[1])
         rotated_end_point = self.rotate_point(end_line, self.angle_line, start_line)
-        pygame.draw.line(screen, color_line, start_line, rotated_end_point, width=2)
+        pygame.draw.line(screen, self.color_line, start_line, rotated_end_point, width=2)
 
 
     def reset(self, random_pos_start):
@@ -138,5 +139,11 @@ class Agent(AbstractCar):
         elif action == 4: # steer left
             self.rotate(left=True)
 
-    def get_random_start_pos(self):
-        return random.choice(self.START_POS)
+    def get_random_start_pos(self, window_size, with_obstacles=False):
+        if with_obstacles == False:
+            x = random.randint(0, window_size[0])
+            y = random.randint(0, window_size[1])
+            return (x,y)
+        
+        else:
+            return random.choice(self.START_POS)
