@@ -1,5 +1,5 @@
 from stable_baselines3 import PPO, DQN
-from gym_game.envs.self_driving.cruising_without_obstacles_env import WithoutObstacles
+from gym_game.envs.self_driving.avoid_obstacles_env import WithObstacles, WithoutObstacles
 
 import gym
 
@@ -15,9 +15,9 @@ if __name__ == "__main__":
 
     # env.render_mode = "human"
 
-    env = WithoutObstacles(render_mode="human")
+    env = WithObstacles(render_mode="human")
 
-    path_model = "trained_agent/models/1712308388/PPO_MODEL_10000000.zip"
+    path_model = "trained_agent/models/1713043920/PPO_MODEL_500000.zip"
     MODEL = PPO.load(path_model)
 
     obs, _info = env.reset()

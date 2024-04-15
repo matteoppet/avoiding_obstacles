@@ -172,8 +172,3 @@ class WithoutObstacles(gym.Env):
         if self.window is not None:
             pygame.display.quit()
             pygame.quit()
-
-
-
-# the agent blocks itself randomly
-# maybe do just a rectangle that goes up right left down then implement

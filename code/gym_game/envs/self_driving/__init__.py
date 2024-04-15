@@ -1,2 +1,1 @@
-from gym_game.envs.self_driving.avoid_obstacles_env import AvoidObstaclesEnv
-from gym_game.envs.self_driving.cruising_without_obstacles_env import WithoutObstacles
+from gym_game.envs.self_driving.avoid_obstacles_env import BaseEnv

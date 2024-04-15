@@ -116,34 +116,34 @@ class Player(AbstractCar):
 
 class Agent(AbstractCar):
     IMG = pygame.Surface((30, 30))
-    START_POS = [
-        (1136, 198), 
-        (576, 93), 
-        (156, 206), 
-        (1177, 452), 
-        (950, 329), 
-        (726, 611), 
-        (137, 452), 
-        (602, 452)
-    ]
 
     def update_position(self, action):
         if action == 1: # accelerate
             self.increase_velocity()
-            self.move()
         elif action == 2: # decelerate 
             self.decrease_velocity()
-            self.move()
         elif action == 3: # steer right
             self.rotate(right=True)
         elif action == 4: # steer left
             self.rotate(left=True)
+            
+        self.move()
 
-    def get_random_start_pos(self, window_size, with_obstacles=False):
-        if with_obstacles == False:
+    def get_random_start_pos(self, window_size):
+        x = random.randint(0, window_size[0])
+        y = random.randint(0, window_size[1])
+        return (x,y)
+        
+    def start_position_with_obstacles(self, window_size, obstacles_sprites_group):
+        r = True
+        while r:
             x = random.randint(0, window_size[0])
             y = random.randint(0, window_size[1])
-            return (x,y)
-        
-        else:
-            return random.choice(self.START_POS)
+
+            for sprite in obstacles_sprites_group:
+                x_obs = sprite.rect.x
+                y_obs = sprite.rect.y
+
+                if x < x_obs or x > x_obs+sprite.rect.width and y < y_obs or y > y_obs+sprite.rect.height:
+                    r = False
+                    return (x,y)

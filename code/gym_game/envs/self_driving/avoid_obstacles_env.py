@@ -8,35 +8,25 @@ from ...helpers.sensors import update_position_sensors, collision_sensors, creat
 from ...helpers.world import World, obstacle_sprites_group
 
 
-class AvoidObstaclesEnv(gym.Env):
+class BaseEnv(gym.Env):
     metadata = {"render_modes": ["human"], "render_fps": 40}
 
     window_size = (1280, 720)
 
-    def __init__(self, render_mode=None):
+    def __init__(self):
         super().__init__()
 
         self.action_space = spaces.Discrete(5)
 
-        """Observations:
-            - Position x agent
-            - Position y agent
-            - Sensor 1
-            - Sensor 2
-            - Sensor 3
-            - Sensor 4
-            - Sensor 5
-            - Speed
-            - Angle
-        """
         low = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-        high = np.array([
-            self.window_size[0],  self.window_size[1],
-            4, 360, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999])
-        self.observation_space = spaces.Box(low=low, high=high,
-                                            shape=(12,), dtype=np.float32)
-
-        self.render_mode = render_mode
+        high = np.array([self.window_size[0], self.window_size[1], 4, 360, 9999, 9999,9999,9999,9999,9999,9999,9999])
+        shape = (len(low),)
+        self.observation_space = spaces.Box(
+            low=low,
+            high=high,
+            shape=shape,
+            dtype=np.float32
+        )
 
         self.window = None
         self.clock = None
@@ -48,14 +38,17 @@ class AvoidObstaclesEnv(gym.Env):
             turnRate
         )
 
-        self.WORLD = World()
-        self.WORLD.create_rect()
-        self.OBSTACLE_SPRITES_GROUP = obstacle_sprites_group
-
         self.stepCounter = 0
 
         self.SENSORS_DATA = create_sensors_data(self.AGENT.rect.center)
-    
+
+
+    def create_world(self, obstacles=False, number_obstacles=0):
+        self.WORLD = World()
+        self.WORLD.create_rect(self.window_size, obstacles, number_obstacles=number_obstacles)
+        self.OBSTACLE_SPRITE_GROUP = obstacle_sprites_group
+
+
     def _get_obs(self):
         obs = [
             self._agent_location[0],
@@ -68,108 +61,47 @@ class AvoidObstaclesEnv(gym.Env):
             obs.append(SENSORS_COLLISIONS_DATA[index+1]["distance"])
 
         return np.array(obs)
-
-
-    def calculate_proximity_reward(self):
-        distance = []
-        for sensor_name in SENSORS_COLLISIONS_DATA:
-            distance.append(SENSORS_COLLISIONS_DATA[sensor_name]["distance"])
-        
-        lessFar_object = min(distance)
-        proximity_penalty = -lessFar_object
-        return proximity_penalty
     
-    def get_reward(self, agent_crashed, velocity_player):
-        # if velocity_player > 0:
-        #     reward = velocity_player
-        # else:
-        #     reward = -3
 
-        # if agent_crashed:
-        #     reward = -5000
-
-        # return reward
-        
-        # TODO make single rewards
-        reward_velocity = velocity_player
-        reward_stop = -3 if velocity_player == 0 else 0
-        reward_crash = -5000 if agent_crashed else 0
-        reward_proximity = self.calculate_proximity_reward()
-
-        # TODO collegate all the rewrads in a single and total reward
-        total_reward = reward_velocity + reward_stop + reward_crash + reward_proximity
-
-        # TODO rwturn the total reward 
-        return total_reward
-
-
-
-    def step(self, action):        
+    def step(self, action):
         self.stepCounter += 1
 
-        # update position player
         self.AGENT.update_position(action)
         self._agent_location = self.AGENT.rect.center
 
-        # update values sensors
         update_position_sensors(self.SENSORS_DATA, self._agent_location, self.AGENT.angle)
-        collision_sensors(self.SENSORS_DATA, self.OBSTACLE_SPRITES_GROUP)
+        collision_sensors(self.SENSORS_DATA, self.OBSTACLE_SPRITE_GROUP)
 
         terminated = False
         truncated = False
-        agent_crashed = self.AGENT.collisions(obstacle_sprites_group)
+        agent_crashed = self.AGENT.collisions(self.OBSTACLE_SPRITE_GROUP)
 
         if agent_crashed:
             terminated = True
             self.stepCounter = 0
-
+        
         if self.stepCounter >= 800:
             truncated = True
             self.stepCounter = 0
 
         done = terminated or truncated
 
-        # reward
-        self.reward = self.get_reward(agent_crashed, self.AGENT.vel)
+        reward = self.get_reward(agent_crashed, self.AGENT.vel)
 
         observation = self._get_obs()
         info = {}
 
         if self.render_mode == "human":
-            self.render(mode="human")
+            self.render()
 
-        return observation, self.reward, done, info
+        return observation, reward, terminated, truncated, info
 
-    def reset(self, seed=None, options=None):
-        super().reset(seed=seed)
-        
-        random_position_start = self.AGENT.get_random_start_pos()
-        self._agent_location = random_position_start
-        self.AGENT.reset(random_position_start)
-
-        self.reward = 0
-
-        update_position_sensors(self.SENSORS_DATA, self._agent_location, self.AGENT.angle)
-        collision_sensors(self.SENSORS_DATA, self.OBSTACLE_SPRITES_GROUP)
-
-        observation = self._get_obs()
-        info = {}
-
-        if self.render_mode == "human":
-            self.render(mode="human")
-
-        return observation, info
-    
-    def render(self, mode):
-        if mode == "human":
-            self.render_mode = "human"
-            self._render_frame()
 
     def _render_frame(self):
         if self.window is None and self.render_mode == "human":
             pygame.init()
             pygame.display.init()
-            pygame.display.set_caption("Avoid Obstacles")
+            pygame.display.set_caption("Cruising around")
 
             self.window = pygame.display.set_mode(self.window_size)
             self.font = pygame.font.SysFont("calibri", 20)
@@ -195,24 +127,102 @@ class AvoidObstaclesEnv(gym.Env):
             self.AGENT.draw(self.window)
 
             velocity_text = self.font.render(f"Velocity: {round(self.AGENT.vel, 2)}", False, (0,0,0))
-            self.window.blit(velocity_text, (20, 290))
+            self.window.blit(velocity_text, (20, 60))
 
             fps_text = self.font.render(f"FPS: {self.clock.get_fps()}", False, (0,0,0))
             self.window.blit(fps_text, (20, 20))
-            
-            stepCounter_text = self.font.render(f"Step count: {self.stepCounter}", False, (0,0,0))
-            self.window.blit(stepCounter_text, (20, 315))
 
-            reward_text = self.font.render(f"Current reward: {round(self.reward, 2)}", False, (0,0,0))
-            self.window.blit(reward_text, (20, 340))
+            stepCounter_text = self.font.render(f"Step count: {self.stepCounter}", False, (0,0,0))
+            self.window.blit(stepCounter_text, (20, 100))
 
             pygame.event.pump()
             pygame.display.update()
 
             self.clock.tick(self.metadata["render_fps"])
 
+
+    def render(self):
+        if self.render_mode == "human":
+            self._render_frame()
+
+    
     def close(self):
         if self.window is not None:
             pygame.display.quit()
             pygame.quit()
 
+
+
+class WithoutObstacles(BaseEnv):
+    def __init__(self, render_mode=None):
+        super().__init__()
+
+        self.render_mode = render_mode
+        self.create_world(obstacles=False)
+
+
+    def get_reward(self, agent_crashed, velocity_player):
+        reward = velocity_player if velocity_player > 0 else -5
+        reward += 0.1 # time
+
+        if agent_crashed:
+            reward = -5000
+
+        return reward
+
+
+    def reset(self, seed=None, options=None):
+        super().reset(seed=seed)
+
+        random_position_start = self.AGENT.get_random_start_pos(self.window_size)
+        self.AGENT.reset(random_position_start)
+        self._agent_location = self.AGENT.rect.center
+
+        update_position_sensors(self.SENSORS_DATA, self._agent_location, self.AGENT.angle)
+        collision_sensors(self.SENSORS_DATA, self.OBSTACLE_SPRITE_GROUP)
+
+        observation = self._get_obs()
+        info = {}
+
+        if self.render_mode == "human":
+            self.render()
+
+        return observation, info
+ 
+
+
+class WithObstacles(BaseEnv):
+    def __init__(self, render_mode=None):
+        super().__init__()
+        
+        self.render_mode = render_mode
+        self.create_world(obstacles=True, number_obstacles=8)
+
+
+    def get_reward(self, agent_crashed, velocity_player):
+        reward = velocity_player if velocity_player > 0 else -5
+        reward += 0.1 # time
+
+        if agent_crashed:
+            reward = -5000
+
+        return reward
+
+
+    def reset(self, seed=None, options=None):
+        super().reset(seed=seed)
+
+        position_to_start = self.AGENT.start_position_with_obstacles(self.window_size, obstacle_sprites_group)
+        self.AGENT.reset(position_to_start)
+        self._agent_location = self.AGENT.rect.center
+
+        update_position_sensors(self.SENSORS_DATA, self._agent_location, self.AGENT.angle)
+        collision_sensors(self.SENSORS_DATA, self.OBSTACLE_SPRITE_GROUP)
+
+        observation = self._get_obs()
+        info = {}
+
+        if self.render_mode == "human":
+            self.render()
+
+        return observation, info
