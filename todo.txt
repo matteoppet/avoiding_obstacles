@@ -1,3 +1,0 @@
-create a class unique for both of the environment
-
-create level of the world
