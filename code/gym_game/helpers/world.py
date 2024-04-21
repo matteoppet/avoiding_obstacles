@@ -15,10 +15,8 @@ class Obstacle(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.image)
 
 class World:
-    def __init__(self, window_size, screen, background):
+    def __init__(self, window_size):
         self.window_size = window_size
-        self.screen = screen
-        self.background = background 
 
 
     def bounds_window(self, window_size):
@@ -68,41 +66,39 @@ class World:
             (0, self.window_size[1]+1),
             (-50, +1)
         ]
-
-        temporary_rect_list = []
         
-        count = 0
-        while count != number_of_obstacles:
+        if number_of_obstacles != 0:
+            temporary_rect_list = []
+            
+            count = 0
+            while count != number_of_obstacles:
 
-            x = np.random.randint(0, self.window_size[0])
-            y = np.random.randint(0, self.window_size[1])
-            temporary_rect = pygame.Rect(x, y, 50, 50)
+                x = np.random.randint(0, self.window_size[0])
+                y = np.random.randint(0, self.window_size[1])
+                temporary_rect = pygame.Rect(x, y, 50, 50)
 
-            less_far_obstacle = 9999
-            for obstacle_info in obstacles_to_draw:
-                center_x_obstacle = obstacle_info[0]+(obstacle_info[2]/2)
-                center_y_obstacle = obstacle_info[1]+(obstacle_info[3]/2)
-                
-                distance = np.linalg.norm(
-                    np.array([center_x_obstacle, center_y_obstacle]) - np.array([x+40, y+40])
-                )
-                
-                if distance < less_far_obstacle:
-                    less_far_obstacle = distance
+                less_far_obstacle = 9999
+                for obstacle_info in obstacles_to_draw:
+                    center_x_obstacle = obstacle_info[0]+(obstacle_info[2]/2)
+                    center_y_obstacle = obstacle_info[1]+(obstacle_info[3]/2)
+                    
+                    distance = np.linalg.norm(
+                        np.array([center_x_obstacle, center_y_obstacle]) - np.array([x+40, y+40])
+                    )
+                    
+                    if distance < less_far_obstacle:
+                        less_far_obstacle = distance
 
-            if not (x, y) in position_already_taken and less_far_obstacle > 200:
+                if not (x, y) in position_already_taken and less_far_obstacle > 200:
 
-                for temp_x, temp_y, temp_width, temp_height in obstacles_to_draw:
-                    temporary_rect_list.append(pygame.Rect(temp_x, temp_y, temp_width, temp_height))
+                    for temp_x, temp_y, temp_width, temp_height in obstacles_to_draw:
+                        temporary_rect_list.append(pygame.Rect(temp_x, temp_y, temp_width, temp_height))
 
-                collides = temporary_rect.collidelist(temporary_rect_list)
-                if collides == -1:
-                    obstacles_to_draw.append((x, y, 80, 80))
-                    position_already_taken.append((x, y))
-                    count += 1
-
-
-        # TODO clean this code
+                    collides = temporary_rect.collidelist(temporary_rect_list)
+                    if collides == -1:
+                        obstacles_to_draw.append((x, y, 80, 80))
+                        position_already_taken.append((x, y))
+                        count += 1
 
         return obstacles_to_draw
     

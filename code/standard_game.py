@@ -30,13 +30,10 @@ PLAYER.reset(PLAYER.START_POS)
 
 
 WORLD = World(
-    SIZE_WINDOW,
-    screen,
-    background
+    SIZE_WINDOW
 )
 obstacle_group = pygame.sprite.Group()
-WORLD.reset_obstacles(obstacle_group, 12)
-
+WORLD.reset_obstacles(obstacle_group, 1)
 
 SENSORS_DATA = create_sensors_data(PLAYER.rect.center)
 
@@ -46,7 +43,7 @@ while running:
             running = False
 
         if event.type == pygame.MOUSEBUTTONDOWN:
-            WORLD.reset_obstacles(obstacle_group, 12)
+            WORLD.reset_obstacles(obstacle_group, 1)
 
     # WORLD.draw_rects(screen)
     screen.fill("#d3d3d3")
@@ -73,15 +70,9 @@ while running:
     fps_text = font.render(f"FPS: {clock.get_fps()}", False, (0,0,0))
     screen.blit(fps_text, (20, 20))
 
-
     pygame.display.flip()
     pygame.display.update()
 
     clock.tick(40)
 
 pygame.quit()
-
-
-
-# train the environment from 0
-# first: without obstacles

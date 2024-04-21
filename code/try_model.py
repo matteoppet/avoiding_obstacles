@@ -15,9 +15,9 @@ if __name__ == "__main__":
 
     # env.render_mode = "human"
 
-    env = WithObstacles(render_mode="human")
+    env = WithObstacles(render_mode="human", number_obstacles=13)
 
-    path_model = "trained_agent/models/1713043920/PPO_MODEL_500000.zip"
+    path_model = "trained_agent/models/PPO_MODELS/PPO_MODEL.zip"
     MODEL = PPO.load(path_model)
 
     obs, _info = env.reset()

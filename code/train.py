@@ -5,8 +5,8 @@ import os
 import time
 
 
-MODELS_DIR = f"trained_agent/models/{int(time.time())}"
-LOGS_DIR = f"trained_agent/logs/{int(time.time())}"
+MODELS_DIR = f"trained_agent/models/PPO_MODELS"
+LOGS_DIR = f"trained_agent/logs/PPO_MODELS"
 
 if not os.path.exists(MODELS_DIR):
     os.makedirs(MODELS_DIR)
@@ -29,6 +29,7 @@ model = PPO(
     verbose=1,
     tensorboard_log=LOGS_DIR,
     device="cpu",
+    n_steps=800
 )
 
 TIMESTEPS = 10000000
@@ -36,7 +37,7 @@ try:
     model.learn(
         total_timesteps=TIMESTEPS,
         tb_log_name="PPO",
-        reset_num_timesteps=False
+        reset_num_timesteps=True
     )
 except KeyboardInterrupt:
     print("Model stopped and save and the current TIMESTEP where it was.")

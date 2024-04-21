@@ -2,7 +2,7 @@ from gym_game.envs.self_driving.avoid_obstacles_env import WithoutObstacles, Wit
 from stable_baselines3.common.vec_env import DummyVecEnv
 
 
-env = WithObstacles(render_mode=None)
+env = WithObstacles(render_mode=None, number_obstacles=10)
 n_cpu = 6
 env = DummyVecEnv([lambda: env])
 
@@ -12,7 +12,7 @@ import os
 import time
 
 
-path_model = "trained_agent/models/" + "1712831354" + "/PPO_MODEL_10000000"
+path_model = "trained_agent/models/" + "PPO_MODELS" + "/PPO_MODEL"
 
 model = PPO.load(
     path=path_model,
@@ -21,8 +21,8 @@ model = PPO.load(
 )
 
 
-MODELS_DIR = f"trained_agent/models/{int(time.time())}"
-LOGS_DIR = f"trained_agent/logs/{int(time.time())}"
+MODELS_DIR = f"trained_agent/models/PPO_MODELS"
+LOGS_DIR = f"trained_agent/logs/PPO_MODELS"
 
 if not os.path.exists(MODELS_DIR):
     os.makedirs(MODELS_DIR)
@@ -33,7 +33,7 @@ if not os.path.exists(LOGS_DIR):
     print("> Logs dir created")
 
 
-TIMESTEPS = 500000
+TIMESTEPS = 2500000
 try:
     model.learn(
         total_timesteps=TIMESTEPS,
@@ -43,4 +43,4 @@ try:
 except KeyboardInterrupt:
     print("Model stopped and save and the current TIMESTEP where it was.")
 
-model.save(f"{MODELS_DIR}/PPO_MODEL_{TIMESTEPS}") # stopped at 6377472
+model.save(f"{MODELS_DIR}/PPO_MODEL")
