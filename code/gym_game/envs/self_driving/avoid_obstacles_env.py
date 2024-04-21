@@ -231,4 +231,5 @@ class WithObstacles(BaseEnv):
     
 
 
-# maybe implement a path where the agent already passed and penalize if the agent re-pass on the same path
+# IDEA: maybe implement a path where the agent already passed and penalize if the agent re-pass on the same path
+# TODO: read me
